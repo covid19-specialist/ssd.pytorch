@@ -77,7 +77,7 @@ else:
 
 annopath = "/kaggle/working/annotations"
 imgpath = "/kaggle/input/global-wheat-detection/train"
-imgsetpath = "/kaggle/working/{}"
+imgsetpath = "/kaggle/working/{}.txt"
 
 YEAR = 'WHEAT'
 devkit_path = args.wheat_root + 'WHEAT'
