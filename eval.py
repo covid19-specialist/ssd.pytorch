@@ -77,7 +77,7 @@ else:
 
 annopath = "/kaggle/working/annotations"
 imgpath = "/kaggle/input/global-wheat-detection/train"
-imgsetpath = "/kaggle/working"
+imgsetpath = "/kaggle/working/{}"
 
 YEAR = 'WHEAT'
 devkit_path = args.wheat_root + 'WHEAT'
@@ -200,7 +200,7 @@ def do_python_eval(output_dir='output', use_07=True):
     print('--------------------------------------------------------------')
 
 
-def wheat_ap(rec, prec, use_07_metric=True):
+def wheat_ap(rec, prec, use_07_metric=False):
     """ ap = voc_ap(rec, prec, [use_07_metric])
     Compute VOC AP given precision and recall.
     If use_07_metric is true, uses the
