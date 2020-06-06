@@ -108,7 +108,12 @@ class WHEATDetection(data.Dataset):
         self.target_transform = target_transform
         self.name = dataset_name
         self._annopath = '/kaggle/working/annotations/'
-        self._imgpath = f'/kaggle/input/global-wheat-detection/{image_sets}/'
+        
+        if image_sets == 'val':
+            self._imgpath = f'/kaggle/input/global-wheat-detection/train/'
+        else:
+            self._imgpath = f'/kaggle/input/global-wheat-detection/{image_sets}/'
+            
         self.ids = list()
         
         for line in open(osp.join(root, image_sets + '.txt')):
