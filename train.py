@@ -23,9 +23,9 @@ def str2bool(v):
 parser = argparse.ArgumentParser(
     description='Single Shot MultiBox Detector Training With Pytorch')
 train_set = parser.add_mutually_exclusive_group()
-parser.add_argument('--dataset', default='VOC', choices=['VOC', 'COCO'],
+parser.add_argument('--dataset', default='WHEAT', choices=['VOC', 'COCO', 'WHEAT'],
                     type=str, help='VOC or COCO')
-parser.add_argument('--dataset_root', default=VOC_ROOT,
+parser.add_argument('--dataset_root', default=WHEAT_ROOT,
                     help='Dataset root directory path')
 parser.add_argument('--basenet', default='vgg16_reducedfc.pth',
                     help='Pretrained base model')
@@ -54,6 +54,22 @@ parser.add_argument('--save_folder', default='weights/',
 args = parser.parse_args()
 
 
+# args = dict()
+# args['dataset'] = 'WHEAT'
+# args['dataset_root'] = WHEAT_ROOT
+# args['basenet'] = 'vgg16_reducedfc.pth' ##'vgg16_reducedfc.pth'
+# args['batch_size'] = 8
+# args['resume'] = None
+# args['start_iter'] = 0
+# args['num_workers'] = 4
+# args['cuda'] = True
+# args['lr'] = 1e-3
+# args['momentum'] = 0.9
+# args['weight_decay'] = 5e-4
+# args['gamma'] = 0.1
+# args['visdom'] = False
+# args['save_folder'] = 'weights/'
+
 if torch.cuda.is_available():
     if args.cuda:
         torch.set_default_tensor_type('torch.cuda.FloatTensor')
@@ -69,25 +85,40 @@ if not os.path.exists(args.save_folder):
 
 
 def train():
-    if args.dataset == 'COCO':
-        if args.dataset_root == VOC_ROOT:
-            if not os.path.exists(COCO_ROOT):
-                parser.error('Must specify dataset_root if specifying dataset')
-            print("WARNING: Using default COCO dataset_root because " +
-                  "--dataset_root was not specified.")
-            args.dataset_root = COCO_ROOT
-        cfg = coco
-        dataset = COCODetection(root=args.dataset_root,
-                                transform=SSDAugmentation(cfg['min_dim'],
-                                                          MEANS))
-    elif args.dataset == 'VOC':
-        if args.dataset_root == COCO_ROOT:
-            parser.error('Must specify dataset if specifying dataset_root')
-        cfg = voc
-        dataset = VOCDetection(root=args.dataset_root,
-                               transform=SSDAugmentation(cfg['min_dim'],
-                                                         MEANS))
-
+    # if args.dataset == 'COCO':
+#         if args.dataset_root == VOC_ROOT:
+#             if not os.path.exists(COCO_ROOT):
+#                 parser.error('Must specify dataset_root if specifying dataset')
+#             print("WARNING: Using default COCO dataset_root because " +
+#                   "--dataset_root was not specified.")
+#             args.dataset_root = COCO_ROOT
+#         cfg = coco
+#         dataset = COCODetection(root=args.dataset_root,
+#                                 transform=SSDAugmentation(cfg['min_dim'],
+#                                                           MEANS))
+#     elif args.dataset == 'VOC':
+#         if args.dataset_root == COCO_ROOT:
+#             parser.error('Must specify dataset if specifying dataset_root')
+#         cfg = voc
+#         dataset = VOCDetection(root=args.dataset_root,
+#                                transform=SSDAugmentation(cfg['min_dim'],
+#                                                          MEANS))
+# 
+#     elif args.dataset == 'WHEAT':
+#         if args.dataset_root != WHEAT_ROOT:
+#             print('Must specify dataset if specifying dataset_root')
+#         cfg = wheat
+#         dataset = WHEATDetection(root=args.dataset_root,
+#                                  transform=SSDAugmentation(cfg['min_dim'],
+#                                                            MEANS))
+               
+    if args.dataset_root != WHEAT_ROOT:
+            print('Must specify dataset if specifying dataset_root')
+    cfg = wheat
+    dataset = WHEATDetection(root=args.dataset_root,
+                             transform=SSDAugmentation(cfg['min_dim'],
+                                                           MEANS))
+                                                                                                       
     if args.visdom:
         import visdom
         viz = visdom.Visdom()
@@ -108,7 +139,11 @@ def train():
         ssd_net.vgg.load_state_dict(vgg_weights)
 
     if args.cuda:
-        net = net.cuda()
+        #handbook
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#         net = net.cuda()
+        net = net.to(device)
+        #handbook
 
     if not args.resume:
         print('Initializing weights...')
@@ -132,6 +167,7 @@ def train():
     epoch_size = len(dataset) // args.batch_size
     print('Training SSD on:', dataset.name)
     print('Using the specified args:')
+    print('epoch_size: ', epoch_size)
     print(args)
 
     step_index = 0
@@ -152,6 +188,8 @@ def train():
         if args.visdom and iteration != 0 and (iteration % epoch_size == 0):
             update_vis_plot(epoch, loc_loss, conf_loss, epoch_plot, None,
                             'append', epoch_size)
+                            
+            print("epoch: ", epoch, " loc_loss: ", loc_loss, " conf_loss: ", conf_loss)
             # reset epoch loss counters
             loc_loss = 0
             conf_loss = 0
@@ -161,15 +199,22 @@ def train():
             step_index += 1
             adjust_learning_rate(optimizer, args.gamma, step_index)
 
-        # load train data
-        images, targets = next(batch_iterator)
+        try:
+            images, targets = next(batch_iterator)
+        except StopIteration:
+            batch_iterator = iter(data_loader)
+            images, targets = next(batch_iterator)
 
         if args.cuda:
-            images = Variable(images.cuda())
-            targets = [Variable(ann.cuda(), volatile=True) for ann in targets]
-        else:
-            images = Variable(images)
-            targets = [Variable(ann, volatile=True) for ann in targets]
+#             with torch.no_grad():
+              #handbook
+#               images = images.cuda()
+#               targets = [ann.cuda() for ann in targets]
+              device = 'cuda' if torch.cuda.is_available() else 'cpu'
+              images = images.to(device)
+              targets = targets.to(device)
+              #handbook
+            
         # forward
         t0 = time.time()
         out = net(images)
@@ -180,20 +225,21 @@ def train():
         loss.backward()
         optimizer.step()
         t1 = time.time()
-        loc_loss += loss_l.data[0]
-        conf_loss += loss_c.data[0]
+        loc_loss += loss_l.data.item()
+        conf_loss += loss_c.data.item()
 
         if iteration % 10 == 0:
             print('timer: %.4f sec.' % (t1 - t0))
-            print('iter ' + repr(iteration) + ' || Loss: %.4f ||' % (loss.data[0]), end=' ')
+            print('iter ' + repr(iteration) + ' || Loss: %.4f ||' % (loss.data.item()), end=' ')
 
         if args.visdom:
-            update_vis_plot(iteration, loss_l.data[0], loss_c.data[0],
+            update_vis_plot(iteration, loss_l.data.item(), loss_c.data.item(),
                             iter_plot, epoch_plot, 'append')
+                            
 
-        if iteration != 0 and iteration % 5000 == 0:
+        if iteration != 0 and iteration % 200 == 0:
             print('Saving state, iter:', iteration)
-            torch.save(ssd_net.state_dict(), 'weights/ssd300_COCO_' +
+            torch.save(ssd_net.state_dict(), 'weights/ssd300_WHEAT_' +
                        repr(iteration) + '.pth')
     torch.save(ssd_net.state_dict(),
                args.save_folder + '' + args.dataset + '.pth')
@@ -211,7 +257,7 @@ def adjust_learning_rate(optimizer, gamma, step):
 
 
 def xavier(param):
-    init.xavier_uniform(param)
+    init.xavier_uniform_(param)
 
 
 def weights_init(m):

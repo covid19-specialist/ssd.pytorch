@@ -2,8 +2,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-from data import coco as cfg
+# from torch.autograd import Variable
+from data import wheat as cfg
 from ..box_utils import match, log_sum_exp
 
 
@@ -73,11 +73,19 @@ class MultiBoxLoss(nn.Module):
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
         if self.use_gpu:
-            loc_t = loc_t.cuda()
-            conf_t = conf_t.cuda()
+              # handbook
+#             loc_t = loc_t.cuda()
+#             conf_t = conf_t.cuda()
+              device = 'cuda' if torch.cuda.is_available() else 'cpu'
+              loc_t = loc_t.to(device)
+              conf_t = conf_t.to(device)
+              # handbook
+              
         # wrap targets
-        loc_t = Variable(loc_t, requires_grad=False)
-        conf_t = Variable(conf_t, requires_grad=False)
+        # handbook
+#         loc_t = Variable(loc_t, requires_grad=False)
+#         conf_t = Variable(conf_t, requires_grad=False)
+        # handbook
 
         pos = conf_t > 0
         num_pos = pos.sum(dim=1, keepdim=True)
@@ -94,8 +102,11 @@ class MultiBoxLoss(nn.Module):
         loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, conf_t.view(-1, 1))
 
         # Hard Negative Mining
-        loss_c[pos] = 0  # filter out pos boxes for now
+        # handbook
+        #loss_c[pos] = 0  # filter out pos boxes for now
+        #loss_c = loss_c.view(num, -1)
         loss_c = loss_c.view(num, -1)
+        loss_c[pos] = 0  # filter out pos boxes for now
         _, loss_idx = loss_c.sort(1, descending=True)
         _, idx_rank = loss_idx.sort(1)
         num_pos = pos.long().sum(1, keepdim=True)
@@ -107,11 +118,16 @@ class MultiBoxLoss(nn.Module):
         neg_idx = neg.unsqueeze(2).expand_as(conf_data)
         conf_p = conf_data[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
         targets_weighted = conf_t[(pos+neg).gt(0)]
-        loss_c = F.cross_entropy(conf_p, targets_weighted, size_average=False)
+        loss_c = F.cross_entropy(conf_p, targets_weighted, size_average=False, reduction='sum')
 
         # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
 
-        N = num_pos.data.sum()
+         # handbook
+#         N = num_pos.data.sum()
+        N = num_pos.data.sum().double()
+        loss_l = loss_l.double()
+        loss_c = loss_c.double()
+         # handbook
         loss_l /= N
         loss_c /= N
         return loss_l, loss_c

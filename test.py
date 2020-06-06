@@ -6,10 +6,10 @@ import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
-from torch.autograd import Variable
-from data import VOC_ROOT, VOC_CLASSES as labelmap
+# from torch.autograd import Variable
+from data import WHEAT_ROOT, WHEAT_CLASSES
 from PIL import Image
-from data import VOCAnnotationTransform, VOCDetection, BaseTransform, VOC_CLASSES
+from data import WHEATAnnotationTransform, WHEATDetection, BaseTransform, WHEAT_CLASSES, label_map as labelmap
 import torch.utils.data as data
 from ssd import build_ssd
 
@@ -22,9 +22,17 @@ parser.add_argument('--visual_threshold', default=0.6, type=float,
                     help='Final confidence threshold')
 parser.add_argument('--cuda', default=True, type=bool,
                     help='Use cuda to train model')
-parser.add_argument('--voc_root', default=VOC_ROOT, help='Location of VOC root directory')
+parser.add_argument('--wheat_root', default=WHEAT_ROOT, help='Location of VOC root directory')
 parser.add_argument('-f', default=None, type=str, help="Dummy arg so we can load in Jupyter Notebooks")
 args = parser.parse_args()
+
+# args = dict()
+# args['trained_model'] = 'weights/ssd300_mAP_77.43_v2.pth'
+# args['save_folder'] = 'eval/'
+# args['visual_threshold'] = 0.6
+# args['cuda'] = True
+# args['wheat_root'] = WHEAT_ROOT
+# args['f'] = None
 
 if args.cuda and torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
@@ -44,16 +52,24 @@ def test_net(save_folder, net, cuda, testset, transform, thresh):
         img = testset.pull_image(i)
         img_id, annotation = testset.pull_anno(i)
         x = torch.from_numpy(transform(img)[0]).permute(2, 0, 1)
-        x = Variable(x.unsqueeze(0))
+        #handbook
+#         x = Variable(x.unsqueeze(0))
+        x = x.unsqueeze(0)
+        #handbook
 
         with open(filename, mode='a') as f:
             f.write('\nGROUND TRUTH FOR: '+img_id+'\n')
             for box in annotation:
                 f.write('label: '+' || '.join(str(b) for b in box)+'\n')
         if cuda:
-            x = x.cuda()
+            #handbook
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#             x = x.cuda()
+            x = x.to(device)
 
-        y = net(x)      # forward pass
+        with torch.nograd():
+            y = net(x)      # forward pass
+            
         detections = y.data
         # scale each detection back up to the image
         scale = torch.Tensor([img.shape[1], img.shape[0],
@@ -76,17 +92,20 @@ def test_net(save_folder, net, cuda, testset, transform, thresh):
                 j += 1
 
 
-def test_voc():
+def test_wheat():
     # load net
-    num_classes = len(VOC_CLASSES) + 1 # +1 background
+    num_classes = len(WHEAT_CLASSES) + 1 # +1 background
     net = build_ssd('test', 300, num_classes) # initialize SSD
     net.load_state_dict(torch.load(args.trained_model))
     net.eval()
     print('Finished loading model!')
     # load data
-    testset = VOCDetection(args.voc_root, [('2007', 'test')], None, VOCAnnotationTransform())
+    testset = WHEATDetection(args.wheat_root, 'test', None, WHEATAnnotationTransform())
     if args.cuda:
-        net = net.cuda()
+        #handbook
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#         net = net.cuda()
+        net = net.to(device)
         cudnn.benchmark = True
     # evaluation
     test_net(args.save_folder, net, args.cuda, testset,
@@ -94,4 +113,4 @@ def test_voc():
              thresh=args.visual_threshold)
 
 if __name__ == '__main__':
-    test_voc()
+    test_wheat()

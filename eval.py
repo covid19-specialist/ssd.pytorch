@@ -8,9 +8,9 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
-from torch.autograd import Variable
-from data import VOC_ROOT, VOCAnnotationTransform, VOCDetection, BaseTransform
-from data import VOC_CLASSES as labelmap
+# from torch.autograd import Variable
+from data import WHEAT_ROOT, WHEATAnnotationTransform, WHEATDetection, BaseTransform 
+from data import label_map as labelmap
 import torch.utils.data as data
 
 from ssd import build_ssd
@@ -46,12 +46,21 @@ parser.add_argument('--top_k', default=5, type=int,
                     help='Further restrict the number of predictions to parse')
 parser.add_argument('--cuda', default=True, type=str2bool,
                     help='Use cuda to train model')
-parser.add_argument('--voc_root', default=VOC_ROOT,
-                    help='Location of VOC root directory')
+parser.add_argument('--wheat_root', default=WHEAT_ROOT,
+                    help='Location of WHEAT root directory')
 parser.add_argument('--cleanup', default=True, type=str2bool,
                     help='Cleanup and remove results files following eval')
 
 args = parser.parse_args()
+
+# args = dict()
+# args['trained_model'] = 'weights/ssd300_mAP_77.43_v2.pth'
+# args['save_folder'] = 'eval/'
+# args['confidence_threshold'] = 0.01
+# args['top_k'] = 5
+# args['cuda'] = True
+# args['wheat_root'] = WHEAT_ROOT
+# args['cleanup'] = True
 
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
@@ -66,12 +75,12 @@ if torch.cuda.is_available():
 else:
     torch.set_default_tensor_type('torch.FloatTensor')
 
-annopath = os.path.join(args.voc_root, 'VOC2007', 'Annotations', '%s.xml')
-imgpath = os.path.join(args.voc_root, 'VOC2007', 'JPEGImages', '%s.jpg')
-imgsetpath = os.path.join(args.voc_root, 'VOC2007', 'ImageSets',
-                          'Main', '{:s}.txt')
-YEAR = '2007'
-devkit_path = args.voc_root + 'VOC' + YEAR
+annopath = "/kaggle/working/annotations"
+imgpath = "/kaggle/input/global-wheat-detection/train"
+imgsetpath = "/kaggle/working"
+
+YEAR = 'WHEAT'
+devkit_path = args.wheat_root + 'WHEAT'
 dataset_mean = (104, 117, 123)
 set_type = 'test'
 
@@ -133,20 +142,20 @@ def get_output_dir(name, phase):
     return filedir
 
 
-def get_voc_results_file_template(image_set, cls):
+def get_wheat_results_file_template(image_set, cls):
     # VOCdevkit/VOC2007/results/det_test_aeroplane.txt
     filename = 'det_' + image_set + '_%s.txt' % (cls)
-    filedir = os.path.join(devkit_path, 'results')
+    filedir = 'results' #os.path.join(devkit_path, 'results')
     if not os.path.exists(filedir):
         os.makedirs(filedir)
     path = os.path.join(filedir, filename)
     return path
 
 
-def write_voc_results_file(all_boxes, dataset):
+def write_wheat_results_file(all_boxes, dataset):
     for cls_ind, cls in enumerate(labelmap):
-        print('Writing {:s} VOC results file'.format(cls))
-        filename = get_voc_results_file_template(set_type, cls)
+        print('Writing {:s} WHEAT results file'.format(cls))
+        filename = get_wheat_results_file_template(set_type, cls)
         with open(filename, 'wt') as f:
             for im_ind, index in enumerate(dataset.ids):
                 dets = all_boxes[cls_ind+1][im_ind]
@@ -161,7 +170,7 @@ def write_voc_results_file(all_boxes, dataset):
 
 
 def do_python_eval(output_dir='output', use_07=True):
-    cachedir = os.path.join(devkit_path, 'annotations_cache')
+    cachedir = 'annotations_cache'
     aps = []
     # The PASCAL VOC metric changed in 2010
     use_07_metric = use_07
@@ -169,8 +178,8 @@ def do_python_eval(output_dir='output', use_07=True):
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
     for i, cls in enumerate(labelmap):
-        filename = get_voc_results_file_template(set_type, cls)
-        rec, prec, ap = voc_eval(
+        filename = get_wheat_results_file_template(set_type, cls)
+        rec, prec, ap = wheat_eval(
            filename, annopath, imgsetpath.format(set_type), cls, cachedir,
            ovthresh=0.5, use_07_metric=use_07_metric)
         aps += [ap]
@@ -191,7 +200,7 @@ def do_python_eval(output_dir='output', use_07=True):
     print('--------------------------------------------------------------')
 
 
-def voc_ap(rec, prec, use_07_metric=True):
+def wheat_ap(rec, prec, use_07_metric=True):
     """ ap = voc_ap(rec, prec, [use_07_metric])
     Compute VOC AP given precision and recall.
     If use_07_metric is true, uses the
@@ -225,7 +234,7 @@ def voc_ap(rec, prec, use_07_metric=True):
     return ap
 
 
-def voc_eval(detpath,
+def wheat_eval(detpath,
              annopath,
              imagesetfile,
              classname,
@@ -352,7 +361,7 @@ cachedir: Directory for caching the annotations
         # avoid divide by zero in case the first detection matches a difficult
         # ground truth
         prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
-        ap = voc_ap(rec, prec, use_07_metric)
+        ap = wheat_ap(rec, prec, use_07_metric)
     else:
         rec = -1.
         prec = -1.
@@ -378,9 +387,14 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
     for i in range(num_images):
         im, gt, h, w = dataset.pull_item(i)
 
-        x = Variable(im.unsqueeze(0))
+#         x = Variable(im.unsqueeze(0))
+        x = im.unsqueeze(0)
         if args.cuda:
-            x = x.cuda()
+            #handbook
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#             x = x.cuda()
+            x = x.to(device)
+            
         _t['im_detect'].tic()
         detections = net(x).data
         detect_time = _t['im_detect'].toc(average=False)
@@ -414,7 +428,7 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
 
 
 def evaluate_detections(box_list, output_dir, dataset):
-    write_voc_results_file(box_list, dataset)
+    write_wheat_results_file(box_list, dataset)
     do_python_eval(output_dir)
 
 
@@ -426,11 +440,14 @@ if __name__ == '__main__':
     net.eval()
     print('Finished loading model!')
     # load data
-    dataset = VOCDetection(args.voc_root, [('2007', set_type)],
+    dataset = WHEATDetection(args.wheat_root, set_type,
                            BaseTransform(300, dataset_mean),
-                           VOCAnnotationTransform())
+                           WHEATAnnotationTransform())
     if args.cuda:
-        net = net.cuda()
+        #handbook
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#         net = net.cuda()
+        net = net.to(device)
         cudnn.benchmark = True
     # evaluation
     test_net(args.save_folder, net, args.cuda, dataset,

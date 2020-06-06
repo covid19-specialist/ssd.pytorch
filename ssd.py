@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
+# from torch.autograd import Variable
 from layers import *
-from data import voc, coco
+from data import wheat
 import os
 
 
@@ -29,9 +29,12 @@ class SSD(nn.Module):
         super(SSD, self).__init__()
         self.phase = phase
         self.num_classes = num_classes
-        self.cfg = (coco, voc)[num_classes == 21]
+        self.cfg = wheat #(coco, voc, wheat)[num_classes == 2]
         self.priorbox = PriorBox(self.cfg)
-        self.priors = Variable(self.priorbox.forward(), volatile=True)
+        
+        with torch.no_grad():
+            self.priors = self.priorbox.forward()
+            
         self.size = size
 
         # SSD network
@@ -43,9 +46,12 @@ class SSD(nn.Module):
         self.loc = nn.ModuleList(head[0])
         self.conf = nn.ModuleList(head[1])
 
-        if phase == 'test':
+        if phase == 'test' or phase == 'valid':
             self.softmax = nn.Softmax(dim=-1)
-            self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
+            # PyTorch1.5.0 support new-style autograd function
+#             self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
+            self.detect = Detect()
+            # PyTorch1.5.0 support new-style autograd function
 
     def forward(self, x):
         """Applies network layers and ops on input image(s) x.
@@ -95,12 +101,13 @@ class SSD(nn.Module):
 
         loc = torch.cat([o.view(o.size(0), -1) for o in loc], 1)
         conf = torch.cat([o.view(o.size(0), -1) for o in conf], 1)
-        if self.phase == "test":
-            output = self.detect(
-                loc.view(loc.size(0), -1, 4),                   # loc preds
-                self.softmax(conf.view(conf.size(0), -1,
-                             self.num_classes)),                # conf preds
-                self.priors.type(type(x.data))                  # default boxes
+        if self.phase == "test" or self.phase == "valid":
+            output = self.detect.apply(self.num_classes, 0, 200, 0.01, 0.45,
+            # PyTorch1.5.0 support new-style autograd function
+                                        loc.view(loc.size(0), -1, 4),                   # loc preds
+                                        self.softmax(conf.view(conf.size(0), -1,
+                                        self.num_classes)),                # conf preds
+                                        self.priors.type(type(x.data))                  # default boxes
             )
         else:
             output = (
@@ -108,6 +115,7 @@ class SSD(nn.Module):
                 conf.view(conf.size(0), -1, self.num_classes),
                 self.priors
             )
+            
         return output
 
     def load_weights(self, base_file):
@@ -195,8 +203,8 @@ mbox = {
 }
 
 
-def build_ssd(phase, size=300, num_classes=21):
-    if phase != "test" and phase != "train":
+def build_ssd(phase, size=300, num_classes=2):
+    if phase != "test" and phase != "train" and phase != "valid":
         print("ERROR: Phase: " + phase + " not recognized")
         return
     if size != 300:
