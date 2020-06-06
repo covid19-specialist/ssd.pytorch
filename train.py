@@ -212,7 +212,7 @@ def train():
 #               targets = [ann.cuda() for ann in targets]
               device = 'cuda' if torch.cuda.is_available() else 'cpu'
               images = images.to(device)
-              targets = targets.to(device)
+              targets = [ann.to(device) for ann in targets]
               #handbook
             
         # forward
