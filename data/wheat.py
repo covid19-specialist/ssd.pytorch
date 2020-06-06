@@ -109,10 +109,7 @@ class WHEATDetection(data.Dataset):
         self.name = dataset_name
         self._annopath = '/kaggle/working/annotations/'
         
-        if image_sets == 'val':
-            self._imgpath = f'/kaggle/input/global-wheat-detection/train/'
-        else:
-            self._imgpath = f'/kaggle/input/global-wheat-detection/{image_sets}/'
+        self._imgpath = f'/kaggle/input/global-wheat-detection/train/'
             
         self.ids = list()
         
