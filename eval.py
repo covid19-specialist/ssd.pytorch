@@ -275,7 +275,7 @@ cachedir: Directory for caching the annotations
         # load annots
         recs = {}
         for i, imagename in enumerate(imagenames):
-            recs[imagename] = parse_rec(annopath + imagename + ".xml")
+            recs[imagename] = parse_rec(annopath + "/" + imagename + ".xml")
             if i % 100 == 0:
                 print('Reading annotation for {:d}/{:d}'.format(
                    i + 1, len(imagenames)))
