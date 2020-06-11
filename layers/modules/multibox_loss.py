@@ -155,10 +155,17 @@ class MultiBoxLoss(nn.Module):
             truths = targets[idx][:, :-1].data
             labels = targets[idx][:, -1].data
             defaults = priors.data
-            match(self.jaccard_thresh, truths, defaults, self.variance, labels,
-                loc_t, conf_t, idx)
-        loc_t = loc_t.cuda()
-        conf_t = conf_t.cuda()
+            match(self.overlap_thresh, truths, defaults, self.variance, labels, loc_t, conf_t, idx)
+            
+        #handbook    
+#         loc_t = loc_t.cuda()
+#         conf_t = conf_t.cuda()
+        if self_use_gpu:
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            
+        loc_t = loc_t.to(device)
+        conf_t = conf_t.to(device)
+        #handbook
     
         # [batch, num_priors]
         pos = conf_t > 0
