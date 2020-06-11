@@ -99,7 +99,8 @@ class MultiBoxLoss(nn.Module):
 
         # Compute max conf across batch for hard negative mining
         batch_conf = conf_data.view(-1, self.num_classes)
-        loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, conf_t.view(-1, 1))
+        # https://github.com/amdegroot/ssd.pytorch/issues/161
+        loss_c = log_sum_exp(batch_conf) - batch_conf.gather(0, conf_t.view(-1, 1))
 
         # Hard Negative Mining
         # handbook

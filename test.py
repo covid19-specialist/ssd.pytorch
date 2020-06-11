@@ -67,7 +67,7 @@ def test_net(save_folder, net, cuda, testset, transform, thresh):
 #             x = x.cuda()
             x = x.to(device)
 
-        with torch.nograd():
+        with torch.no_grad():
             y = net(x)      # forward pass
             
         detections = y.data
