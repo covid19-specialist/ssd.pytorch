@@ -135,12 +135,12 @@ class MultiBoxLoss(nn.Module):
 
     def forward(self, predictions, targets):     
     # predictions (tuple) : A tuple (loc, conf, prior boxes) from SSD net
-        loc   : [batch_size, num_priors, 4]
-        conf  : [batch_size, num_priors, num_classes]
-        prior : [num_priors, 4]
+        # loc   : [batch_size, num_priors, 4]
+#         conf  : [batch_size, num_priors, num_classes]
+#         prior : [num_priors, 4]
     # targets : Ground truth boxes and labels for a batch,
-        [num_objs, 5],
-        [x1,y1,x2,y2,class] format
+        # [num_objs, 5],
+#         [x1,y1,x2,y2,class] format
 
     loc_data, conf_data, priors = predictions
     num = loc_data.size(0)
