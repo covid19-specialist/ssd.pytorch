@@ -1,5 +1,5 @@
 # from .voc0712 import VOCDetection, VOCAnnotationTransform, VOC_CLASSES, VOC_ROOT
-from .wheat import WHEATDetection, WHEATAnnotationTransform, WHEAT_CLASSES, WHEAT_ROOT, label_map
+from .wheat import WHEATDetection, WHEATAnnotationTransform, WHEAT_CLASSES, WHEAT_ROOT #, label_map
 # from .coco import COCODetection, COCOAnnotationTransform, COCO_CLASSES, COCO_ROOT, get_label_map
 from .config import *
 import torch

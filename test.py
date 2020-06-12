@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 # from torch.autograd import Variable
 from data import WHEAT_ROOT, WHEAT_CLASSES
 from PIL import Image
-from data import WHEATAnnotationTransform, WHEATDetection, BaseTransform, WHEAT_CLASSES, label_map as labelmap
+from data import WHEATAnnotationTransform, WHEATDetection, BaseTransform, WHEAT_CLASSES as labelmap
 import torch.utils.data as data
 from ssd import build_ssd
 

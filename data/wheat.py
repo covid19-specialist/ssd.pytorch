@@ -23,12 +23,12 @@ WHEAT_CLASSES = (  # always index 0
 # note: if you used our download scripts, this should be right
 WHEAT_ROOT = "/kaggle/working" #osp.join(HOME, "data/")
 
-label_map = {'wheat': 1}
-
-rev_label_map = {
-    1: 'wheat',
-    0: 'background'
-}
+# label_map = {'wheat': 1}
+# 
+# rev_label_map = {
+#     1: 'wheat',
+#     0: 'background'
+# }
 
 class WHEATAnnotationTransform(object):
     """Transforms a VOC annotation into a Tensor of bbox coords and label index
@@ -44,9 +44,9 @@ class WHEATAnnotationTransform(object):
     """
 
     def __init__(self, class_to_ind=None, keep_difficult=False):
-        # self.class_to_ind = class_to_ind or dict(
-#             zip(WHEAT_CLASSES, range(len(WHEAT_CLASSES))))
-        self.class_to_ind = class_to_ind or label_map
+        self.class_to_ind = class_to_ind or dict(
+            zip(WHEAT_CLASSES, range(len(WHEAT_CLASSES))))
+#         self.class_to_ind = class_to_ind or label_map
         self.keep_difficult = keep_difficult
 
     def __call__(self, target, width, height):
