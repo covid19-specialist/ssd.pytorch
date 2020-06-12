@@ -44,9 +44,9 @@ class WHEATAnnotationTransform(object):
     """
 
     def __init__(self, class_to_ind=None, keep_difficult=False):
-        self.class_to_ind = class_to_ind or dict(
-            zip(WHEAT_CLASSES, range(len(WHEAT_CLASSES))))
-#         self.class_to_ind = class_to_ind or label_map
+        # self.class_to_ind = class_to_ind or dict(
+#             zip(WHEAT_CLASSES, range(len(WHEAT_CLASSES))))
+        self.class_to_ind = class_to_ind or label_map
         self.keep_difficult = keep_difficult
 
     def __call__(self, target, width, height):
