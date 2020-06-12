@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 # from torch.autograd import Variable
 from data import WHEAT_ROOT, WHEATAnnotationTransform, WHEATDetection, BaseTransform 
-from data import WHEAT_CLASSES as labelmap
+from data import label_map as labelmap
 import torch.utils.data as data
 
 from ssd import build_ssd
