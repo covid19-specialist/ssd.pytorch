@@ -75,14 +75,14 @@ def test_net(save_folder, net, cuda, testset, transform, thresh):
         scale = torch.Tensor([img.shape[1], img.shape[0],
                              img.shape[1], img.shape[0]])
         pred_num = 0
-        for i in range(detections.size(1)):
+        for i in range(1, detections.size(1)):
             j = 0
             while detections[0, i, j, 0] >= 0.6:
                 if pred_num == 0:
                     with open(filename, mode='a') as f:
                         f.write('PREDICTIONS: '+'\n')
                 score = detections[0, i, j, 0]
-                label_name = labelmap[i-1]
+                label_name = labelmap[i]
                 pt = (detections[0, i, j, 1:]*scale).cpu().numpy()
                 coords = (pt[0], pt[1], pt[2], pt[3])
                 pred_num += 1
