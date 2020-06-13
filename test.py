@@ -94,7 +94,7 @@ def test_net(save_folder, net, cuda, testset, transform, thresh):
 
 def test_wheat():
     # load net
-    num_classes = len(WHEAT_CLASSES) + 1 # +1 background
+    num_classes = len(labelmap) + 1 # +1 background
     net = build_ssd('test', 300, num_classes) # initialize SSD
     net.load_state_dict(torch.load(args.trained_model))
     net.eval()
