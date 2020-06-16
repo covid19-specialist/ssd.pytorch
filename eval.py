@@ -154,20 +154,24 @@ def get_wheat_results_file_template(image_set, cls):
 
 def write_wheat_results_file(all_boxes, dataset):
     for cls_ind, cls in enumerate(labelmap):
+        print(cls_ind, cls)
         print('Writing {:s} WHEAT results file'.format(cls))
         filename = get_wheat_results_file_template(set_type, cls)
+        print(filename)
         with open(filename, 'wt') as f:
             for im_ind, index in enumerate(dataset.ids):
+                print(im_ind, index)
                 # dets = all_boxes[cls_ind+1][im_ind]
-                dets = all_boxes[cls_ind][im_ind]
+                dets = all_boxes[cls_ind+1][im_ind]
                 if dets == []:
                     continue
                 # the VOCdevkit expects 1-based indices
+                print(index, " ", dets.shape)
                 for k in range(dets.shape[0]):
                     f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.
-                            format(index[1], dets[k, -1],
-                                   dets[k, 0] + 1, dets[k, 1] + 1,
-                                   dets[k, 2] + 1, dets[k, 3] + 1))
+                            format(index, dets[k, -1],
+                                   dets[k, 0], dets[k, 1],
+                                   dets[k, 2], dets[k, 3]))
 
 
 def do_python_eval(output_dir='output', use_07=True):
@@ -436,20 +440,23 @@ def evaluate_detections(box_list, output_dir, dataset):
 if __name__ == '__main__':
     # load net
     num_classes = len(labelmap) + 1                      # +1 for background
-    net = build_ssd('test', 300, num_classes)            # initialize SSD
-    net.load_state_dict(torch.load(args.trained_model))
+    ssd_net = build_ssd('test', 300, num_classes)            # initialize SSD
+    
+    if args.cuda:
+        #handbook
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#         net = net.cuda()
+        net = ssd_net.to(device)
+        cudnn.benchmark = True
+        
+    net.load_weights(args.trained_model)
     net.eval()
     print('Finished loading model!')
     # load data
     dataset = WHEATDetection(args.wheat_root, set_type,
                            BaseTransform(300, dataset_mean),
                            WHEATAnnotationTransform())
-    if args.cuda:
-        #handbook
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-#         net = net.cuda()
-        net = net.to(device)
-        cudnn.benchmark = True
+                           
     # evaluation
     test_net(args.save_folder, net, args.cuda, dataset,
              BaseTransform(net.size, dataset_mean), args.top_k, 300,
