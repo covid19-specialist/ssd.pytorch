@@ -153,7 +153,8 @@ def get_wheat_results_file_template(image_set, cls):
 
 
 def write_wheat_results_file(all_boxes, dataset):
-    for cls_ind, cls in enumerate(labelmap):
+    for ind, cls in enumerate(labelmap):
+        cls_ind = labelmap[cls]
         print(cls_ind, cls)
         print('Writing {:s} WHEAT results file'.format(cls))
         filename = get_wheat_results_file_template(set_type, cls)
@@ -162,7 +163,7 @@ def write_wheat_results_file(all_boxes, dataset):
             for im_ind, index in enumerate(dataset.ids):
                 print(im_ind, index)
                 # dets = all_boxes[cls_ind+1][im_ind]
-                dets = all_boxes[cls_ind+1][im_ind]
+                dets = all_boxes[cls_ind][im_ind]
                 if dets == []:
                     continue
                 # the VOCdevkit expects 1-based indices
