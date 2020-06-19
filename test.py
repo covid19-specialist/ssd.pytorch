@@ -95,18 +95,22 @@ def test_net(save_folder, net, cuda, testset, transform, thresh):
 def test_wheat():
     # load net
     num_classes = len(labelmap) + 1 # +1 background
-    net = build_ssd('test', 300, num_classes) # initialize SSD
-    net.load_state_dict(torch.load(args.trained_model))
-    net.eval()
-    print('Finished loading model!')
-    # load data
-    testset = WHEATDetection(args.wheat_root, 'test', None, WHEATAnnotationTransform())
+    ssd_net = build_ssd('test', 300, num_classes) # initialize SSD
+    
     if args.cuda:
         #handbook
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 #         net = net.cuda()
-        net = net.to(device)
+        net = ssd_net.to(device)
         cudnn.benchmark = True
+        
+    net.load_weights(args.trained_model)
+    net.eval()
+    print('Finished loading model!')
+    
+    # load data
+    testset = WHEATDetection(args.wheat_root, 'test', None, WHEATAnnotationTransform())
+        
     # evaluation
     test_net(args.save_folder, net, args.cuda, testset,
              BaseTransform(net.size, (104, 117, 123)),

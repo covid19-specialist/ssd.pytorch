@@ -46,7 +46,7 @@ class SSD(nn.Module):
         self.loc = nn.ModuleList(head[0])
         self.conf = nn.ModuleList(head[1])
 
-        if phase == 'test' or phase == 'valid':
+        if phase == 'test':
             self.softmax = nn.Softmax(dim=-1)
             # PyTorch1.5.0 support new-style autograd function
 #             self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
@@ -101,7 +101,7 @@ class SSD(nn.Module):
 
         loc = torch.cat([o.view(o.size(0), -1) for o in loc], 1)
         conf = torch.cat([o.view(o.size(0), -1) for o in conf], 1)
-        if self.phase == "test" or self.phase == "valid":
+        if self.phase == "test":
             output = self.detect.apply(self.num_classes, 0, 200, 0.01, 0.45,
             # PyTorch1.5.0 support new-style autograd function
                                         loc.view(loc.size(0), -1, 4),                   # loc preds
@@ -204,7 +204,7 @@ mbox = {
 
 
 def build_ssd(phase, size=300, num_classes=2):
-    if phase != "test" and phase != "train" and phase != "valid":
+    if phase != "test" and phase != "train":
         print("ERROR: Phase: " + phase + " not recognized")
         return
     if size != 300:
