@@ -44,7 +44,7 @@ coco = {
 
 wheat = {
     'num_classes': 2,
-    'lr_steps': (6000, 8000, 20000),
+    'lr_steps': (16000, 18000, 20000),
     'max_iter': 20000, #10000,
     'feature_maps': [38, 19, 10, 5, 3, 1],
     'min_dim': 300,

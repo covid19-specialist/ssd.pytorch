@@ -369,8 +369,6 @@ cachedir: Directory for caching the annotations
         prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
         ap = wheat_ap(rec, prec, use_07_metric)
         
-        print("rec:", rec )
-        print("prec: ", prec)
     else:
         rec = -1.
         prec = -1.
