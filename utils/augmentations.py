@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import types
 from numpy import random
+import torchvision.transforms.functional as FT
 
 
 def intersect(box_a, box_b):
@@ -336,6 +337,18 @@ class Expand(object):
 
         return image, boxes, labels
 
+class RandomFlip(object):
+    def __call__(self, image, boxes, classes):
+        if random.randint(2):
+            new_image = FT.hflip(image)
+            
+            ## Flip boxes
+            new_boxes = boxes
+            new_boxes[:, 0] = image.width - boxes[:, 0] - 1
+            new_boxes[:, 2] = image.width - boxes[:, 2] - 1
+            new_boxes = new_boxes[:, [2, 1, 0, 3]]
+
+        return new_image, new_boxes
 
 class RandomMirror(object):
     def __call__(self, image, boxes, classes):
@@ -407,6 +420,7 @@ class SSDAugmentation(object):
             PhotometricDistort(),
             Expand(self.mean),
             RandomSampleCrop(),
+            RandomFlip(),
             RandomMirror(),
             ToPercentCoords(),
             Resize(self.size),
