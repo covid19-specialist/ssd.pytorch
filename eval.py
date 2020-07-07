@@ -441,7 +441,7 @@ def evaluate_detections(box_list, output_dir, dataset):
 
 if __name__ == '__main__':
     # load net
-    num_classes = len(labelmap) + 1                      # +1 for background
+    num_classes = len(labelmap) ## + 1  removed as background is included too for hard negative mining   # +1 for background in the default impl
     ssd_net = build_ssd('test', 300, num_classes)            # initialize SSD
     
     if args.cuda:
