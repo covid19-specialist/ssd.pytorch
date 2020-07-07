@@ -23,7 +23,7 @@ WHEAT_CLASSES = (  # always index 0
 # note: if you used our download scripts, this should be right
 WHEAT_ROOT = "/kaggle/working" #osp.join(HOME, "data/")
 
-label_map = {'wheat': 1}
+label_map = {'background': 0, 'wheat': 1}
 
 rev_label_map = {
     0: 'background',
