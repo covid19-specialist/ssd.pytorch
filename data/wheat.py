@@ -17,7 +17,7 @@ if sys.version_info[0] == 2:
 else:
     import xml.etree.ElementTree as ET
 
-WHEAT_CLASSES = ( 'background', # always index 0
+WHEAT_CLASSES = (  # always index 0
                   'wheat')
 
 # note: if you used our download scripts, this should be right
