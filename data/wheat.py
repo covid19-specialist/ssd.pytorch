@@ -17,13 +17,14 @@ if sys.version_info[0] == 2:
 else:
     import xml.etree.ElementTree as ET
 
-WHEAT_CLASSES = (  # always index 0
-     'wheat')
+WHEAT_CLASSES = ( 'background', # always index 0
+                  'wheat')
 
 # note: if you used our download scripts, this should be right
 WHEAT_ROOT = "/kaggle/working" #osp.join(HOME, "data/")
 
-label_map = {'background': 0, 'wheat': 1}
+label_map = {'background': 0, 
+             'wheat': 1}
 
 rev_label_map = {
     0: 'background',
