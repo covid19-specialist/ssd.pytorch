@@ -568,12 +568,48 @@ class CutMix(object):
         
         return image_batch_updated[0], image_boxes_updated, image_labels_updated
 
+    def generate_mixup_image(self, image_batch, image_batch_boxes, image_batch_labels, beta=1.0):
+        """ Generate a MixUp augmented image from a batch 
+        Args:
+            - image_batch: a batch of input images
+            - image_batch_labels: labels corresponding to the image batch
+            - beta: a parameter of Beta distribution.
+        Returns:
+            - CutMix image batch, updated labels
+        """
+        # generate mixed sample
+        lam = np.random.beta(beta, beta)
+            
+        bbx1, bby1, bbx2, bby2 = self.rand_bbox(image_batch[1].shape, lam)
+        image_batch_updated = image_batch.copy()
+        
+        image_batch_updated[0, bby1:bby2, bbx1:bbx2, :] = ( image_batch_updated[0, bby1:bby2, bbx1:bbx2, :] + 
+                                                            image_batch_updated[1, bby1:bby2, bbx1:bbx2, :] ) / 2.0
+        
+        
+        print(bbx1, bby1, bbx2, bby2)
+        image_ref_boxes, image_ref_labels = image_batch_boxes[0].copy(), image_batch_labels[0].copy()
+        
+        
+        image_patch_boxes, image_patch_labels = self.filter_cropped(image_batch_boxes[1],
+                                                                    image_batch_labels[1],
+                                                                    bbx1, bby1, bbx2, bby2
+                                                                   )
+        
+        image_boxes_updated = np.concatenate([image_ref_boxes, image_patch_boxes])
+        image_labels_updated = np.concatenate([image_ref_labels, image_patch_labels])
+        
+        return image_batch_updated[0], image_boxes_updated, image_labels_updated
+        
     def __call__(self, ref_image, ref_boxes, ref_labels, rand_image, rand_boxes, rand_labels):
         batch_img = np.array([ref_image, rand_image])
         batch_boxes = np.array([ref_boxes, rand_boxes])
         batch_labels = np.array([ref_labels, rand_labels])
         
-        return self.generate_cutmix_image(batch_img, batch_boxes, batch_labels, 1.0)
+        if random.randint(2):
+            return self.generate_cutmix_image(batch_img, batch_boxes, batch_labels, 1.0)
+        else:
+            return self.generate_mixup_image(batch_img, batch_boxes, batch_labels, 1.0)
         
 class SSDAugmentation(object):
     def __init__(self, size=300, mean=(104, 117, 123)):
@@ -592,13 +628,24 @@ class SSDAugmentation(object):
             SubtractMeans(self.mean)
         ])
         
+        self.augmix = Compose([
+            ConvertFromInts(),
+            ToAbsoluteCoords(),
+            PhotometricDistort(),
+            Expand(self.mean),
+            RandomMirror(),
+            ToPercentCoords(),
+            Resize(self.size),
+            SubtractMeans(self.mean)
+        ])
+        
         self.cutmix = CutMix(self.size)
 
     def __call__(self, img, boxes, labels, rand_img=None, rand_boxes=None, rand_labels=None):
         if rand_img is None:
             return self.augment(img, boxes, labels)
         else:
-            in_img, in_boxes, in_labels = self.augment(img, boxes, labels)
-            patch_img, patch_boxes, patch_labels = self.augment(rand_img, rand_boxes, rand_labels)
+            in_img, in_boxes, in_labels = self.augmix(img, boxes, labels)
+            patch_img, patch_boxes, patch_labels = self.augmix(rand_img, rand_boxes, rand_labels)
             
             return self.cutmix(in_img, in_boxes, in_labels, patch_img, patch_boxes, patch_labels)
