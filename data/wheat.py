@@ -125,12 +125,33 @@ class WHEATDetection(data.Dataset):
     def __len__(self):
         return len(self.ids)
 
+    # def pull_item(self, index):
+#         img_id = self.ids[index]
+# 
+# #         print(img_id)
+#         target = ET.parse(f"{self._annopath}{img_id}.xml").getroot()
+# #         print(target)
+#         img = cv2.imread(f"{self._imgpath}{img_id}.jpg")
+#         height, width, channels = img.shape
+# 
+#         if self.target_transform is not None:
+#             target = self.target_transform(target, width, height)
+# 
+#         if self.transform is not None:
+#             target = np.array(target)
+#             img, boxes, labels = self.transform(img, target[:, :4], target[:, 4])
+#             # to rgb
+#             img = img[:, :, (2, 1, 0)]
+#             # img = img.transpose(2, 0, 1)
+#             target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
+#         return torch.from_numpy(img).permute(2, 0, 1), target, height, width
+#         # return torch.from_numpy(img), target, height, width
+
     def pull_item(self, index):
         img_id = self.ids[index]
 
-#         print(img_id)
         target = ET.parse(f"{self._annopath}{img_id}.xml").getroot()
-#         print(target)
+
         img = cv2.imread(f"{self._imgpath}{img_id}.jpg")
         height, width, channels = img.shape
 
@@ -138,15 +159,35 @@ class WHEATDetection(data.Dataset):
             target = self.target_transform(target, width, height)
 
         if self.transform is not None:
-            target = np.array(target)
-            img, boxes, labels = self.transform(img, target[:, :4], target[:, 4])
-            # to rgb
-            img = img[:, :, (2, 1, 0)]
-            # img = img.transpose(2, 0, 1)
-            target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
-        return torch.from_numpy(img).permute(2, 0, 1), target, height, width
-        # return torch.from_numpy(img), target, height, width
+            if random.randint(2):
+                target = np.array(target)
+                
+                rand_index = random.randint(len(self.ids)) 
+                rand_img_id = self.ids[rand_index]
+                rand_target = ET.parse(f"{self._annopath}{rand_img_id}.xml").getroot()
+                rand_img = cv2.imread(f"{self._imgpath}{rand_img_id}.jpg")
+                height, width, channels = rand_img.shape
 
+                if self.target_transform is not None:
+                    rand_target = self.target_transform(rand_target, width, height)
+
+                rand_target = np.array(rand_target)
+                
+                img, boxes, labels = self.transform(img, target[:, :4], target[:, 4], rand_img, rand_target[:, :4], rand_target[:, 4])
+                # to rgb
+                img = img[:, :, (2, 1, 0)]
+                
+                target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
+            else:
+                target = np.array(target)
+                img, boxes, labels = self.transform(img, target[:, :4], target[:, 4])
+                # to rgb
+                img = img[:, :, (2, 1, 0)]
+                
+                target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
+                
+        return torch.from_numpy(img).permute(2, 0, 1), target, height, width
+        
     def pull_image(self, index):
         '''Returns the original image object at index in PIL form
 

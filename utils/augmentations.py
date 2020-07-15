@@ -409,7 +409,172 @@ class PhotometricDistort(object):
         im, boxes, labels = distort(im, boxes, labels)
         return self.rand_light_noise(im, boxes, labels)
 
+class CutMix(object):
+    def __init__(self, size):
+        self.size = float(size)
+        
+    def rand_bbox(self, size, lamb):
+        """ Generate random bounding box 
+        Args:
+            - size: [width, breadth] of the bounding box
+            - lamb: (lambda) cut ratio parameter
+        Returns:
+            - Bounding box
+        """
+        W = size[0]
+        H = size[1]
+        cut_rat = np.sqrt(1. - lamb)
+        cut_w = np.int(W * cut_rat)
+        cut_h = np.int(H * cut_rat)
 
+        # uniform
+        cx = np.random.randint(W)
+        cy = np.random.randint(H)
+
+        bbx1 = np.clip(cx - cut_w // 2, 0, W)
+        bby1 = np.clip(cy - cut_h // 2, 0, H)
+        bbx2 = np.clip(cx + cut_w // 2, 0, W)
+        bby2 = np.clip(cy + cut_h // 2, 0, H)
+
+        return bbx1, bby1, bbx2, bby2
+
+    def filter_cropped(self, bboxes, labels, xmin, ymin, xmax, ymax):
+        # convert to integer rect x1,y1,x2,y2
+        rect = np.array([xmin, ymin, xmax, ymax])
+
+        new_boxes = bboxes.copy() 
+        new_boxes *= self.size
+        new_labels = labels.copy()
+
+        # calculate IoU (jaccard overlap) b/t the cropped and gt boxes
+        inter = intersect(new_boxes, rect)
+        overlap = np.zeros(shape=inter.shape, dtype=float)
+
+        area = (new_boxes[:, 2] - new_boxes[:, 0]) * (new_boxes[:, 3] - new_boxes[:, 1])
+        overlap = inter / area
+
+        mask = (overlap > 0)
+
+        if mask.any():
+            new_boxes = new_boxes[mask, :]
+            new_labels = new_labels[mask]
+        else:
+            mask = ~mask
+            return new_boxes[mask, :], new_labels[mask]
+
+        new_boxes[:, 0] = np.clip(new_boxes[:, 0], xmin, xmax)
+        new_boxes[:, 2] = np.clip(new_boxes[:, 2], xmin, xmax)
+        new_boxes[:, 1] = np.clip(new_boxes[:, 1], ymin, ymax)
+        new_boxes[:, 3] = np.clip(new_boxes[:, 3], ymin, ymax)
+
+        mask_x = ((new_boxes[:, 0] == xmin) * (new_boxes[:, 2] == xmin)) + ((new_boxes[:, 0] == xmax) * (new_boxes[:, 2] == xmax))
+        mask_y = ((new_boxes[:, 1] == ymin) * (new_boxes[:, 3] == ymin)) + ((new_boxes[:, 1] == ymax) * (new_boxes[:, 3] == ymax))
+        mask = mask_x + mask_y
+
+        if mask.any():
+            mask = ~mask
+            new_boxes = new_boxes[mask, :]
+            new_labels = new_labels[mask]
+
+        new_boxes /= self.size
+
+        return new_boxes, new_labels
+        
+    def filter_uncropped(self, bboxes, labels, xmin, ymin, xmax, ymax):
+        new_boxes = bboxes.copy()
+        new_boxes *= self.size
+        new_labels = labels.copy()
+
+        # convert to integer rect x1,y1,x2,y2
+        rect = np.array([xmin, ymin, xmax, ymax])
+
+        # calculate IoU (jaccard overlap) b/t the cropped and gt boxes
+        inter = intersect(new_boxes, rect)
+        overlap = np.zeros(shape=inter.shape, dtype=float)
+
+        area = (new_boxes[:, 2] - new_boxes[:, 0]) * (new_boxes[:, 3] - new_boxes[:, 1])
+        overlap = inter / area
+
+        mask = (overlap < 1.0)
+
+        if mask.any():
+            new_boxes = new_boxes[mask, :]
+            new_labels = new_labels[mask]
+        else:
+            mask = ~mask
+            return new_boxes[mask, :], new_labels[mask]
+
+        mask_xmin = ((new_boxes[:, 0] > xmin) * (new_boxes[:, 0] < xmax))
+        mask_xmax = ((new_boxes[:, 2] > xmin) * (new_boxes[:, 2] < xmax))
+        mask_ymin = ((new_boxes[:, 1] > ymin) * (new_boxes[:, 1] < ymax))
+        mask_ymax = ((new_boxes[:, 3] > ymin) * (new_boxes[:, 3] < ymax))
+
+        mask = mask_xmin * mask_ymin * mask_ymax
+
+        if mask.any():
+            new_boxes[mask, 0] = xmax
+
+        mask = mask_xmax * mask_ymin * mask_ymax
+
+        if mask.any():
+            new_boxes[mask, 2] = xmin
+
+        mask = mask_ymin * mask_xmin * mask_xmax
+
+        if mask.any():
+            new_boxes[mask, 1] = ymax
+
+        mask = mask_ymax * mask_xmin * mask_xmax
+
+        if mask.any():
+            new_boxes[mask, 3] = ymin
+
+        new_boxes /= self.size
+
+        return new_boxes, new_labels
+
+    def generate_cutmix_image(self, image_batch, image_batch_boxes, image_batch_labels, beta=1.0):
+        """ Generate a CutMix augmented image from a batch 
+        Args:
+            - image_batch: a batch of input images
+            - image_batch_labels: labels corresponding to the image batch
+            - beta: a parameter of Beta distribution.
+        Returns:
+            - CutMix image batch, updated labels
+        """
+        # generate mixed sample
+        lam = np.random.beta(beta, beta)
+            
+        bbx1, bby1, bbx2, bby2 = self.rand_bbox(image_batch[1].shape, lam)
+        image_batch_updated = image_batch.copy()
+        
+        image_batch_updated[0, bby1:bby2, bbx1:bbx2, :] = image_batch_updated[1, bby1:bby2, bbx1:bbx2, :]
+        
+        
+        print(bbx1, bby1, bbx2, bby2)
+        image_ref_boxes, image_ref_labels = self.filter_uncropped(image_batch_boxes[0], 
+                                                                  image_batch_labels[0],
+                                                                  bbx1, bby1, bbx2, bby2
+                                                                 )
+        
+        
+        image_patch_boxes, image_patch_labels = self.filter_cropped(image_batch_boxes[1],
+                                                                    image_batch_labels[1],
+                                                                    bbx1, bby1, bbx2, bby2
+                                                                   )
+        
+        image_boxes_updated = np.concatenate([image_ref_boxes, image_patch_boxes])
+        image_labels_updated = np.concatenate([image_ref_labels, image_patch_labels])
+        
+        return image_batch_updated[0], image_boxes_updated, image_labels_updated
+
+    def __call__(self, ref_image, ref_boxes, ref_labels, rand_image, rand_boxes, rand_labels):
+        batch_img = np.array([ref_image, rand_image])
+        batch_boxes = np.array([ref_boxes, rand_boxes])
+        batch_labels = np.array([ref_labels, rand_labels])
+        
+        return self.generate_cutmix_image(batch_img, batch_boxes, batch_labels, 1.0)
+        
 class SSDAugmentation(object):
     def __init__(self, size=300, mean=(104, 117, 123)):
         self.mean = mean
@@ -426,6 +591,14 @@ class SSDAugmentation(object):
             Resize(self.size),
             SubtractMeans(self.mean)
         ])
+        
+        self.cutmix = CutMix(self.size)
 
-    def __call__(self, img, boxes, labels):
-        return self.augment(img, boxes, labels)
+    def __call__(self, img, boxes, labels, rand_img=None, rand_boxes=None, rand_labels=None):
+        if rand_img is None:
+            return self.augment(img, boxes, labels)
+        else:
+            in_img, in_boxes, in_labels = self.augment(img, boxes, labels)
+            patch_img, patch_boxes, patch_labels = self.augment(rand_img, rand_boxes, rand_labels)
+            
+            return self.cutmix(in_img, in_boxes, in_labels, patch_img, patch_boxes, patch_labels)
