@@ -161,7 +161,7 @@ class WHEATDetection(data.Dataset):
             target = self.target_transform(target, width, height)
 
         if self.transform is not None:
-            if image_sets == 'train' and random.randint(3) > 0:
+            if self.image_set == 'train' and random.randint(3) > 0:
                 target = np.array(target)
                 
                 rand_index = random.randint(len(self.ids)) 
