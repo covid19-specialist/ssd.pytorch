@@ -551,7 +551,7 @@ class CutMix(object):
         image_batch_updated[0, bby1:bby2, bbx1:bbx2, :] = image_batch_updated[1, bby1:bby2, bbx1:bbx2, :]
         
         
-        print(bbx1, bby1, bbx2, bby2)
+#         print(bbx1, bby1, bbx2, bby2)
         image_ref_boxes, image_ref_labels = self.filter_uncropped(image_batch_boxes[0], 
                                                                   image_batch_labels[0],
                                                                   bbx1, bby1, bbx2, bby2
