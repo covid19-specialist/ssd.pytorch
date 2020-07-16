@@ -587,7 +587,7 @@ class CutMix(object):
                                                             image_batch_updated[1, bby1:bby2, bbx1:bbx2, :] ) / 2.0
         
         
-        print(bbx1, bby1, bbx2, bby2)
+#         print(bbx1, bby1, bbx2, bby2)
         image_ref_boxes, image_ref_labels = image_batch_boxes[0].copy(), image_batch_labels[0].copy()
         
         
