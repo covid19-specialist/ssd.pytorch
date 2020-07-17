@@ -453,7 +453,7 @@ class CutMix(object):
         area = (new_boxes[:, 2] - new_boxes[:, 0]) * (new_boxes[:, 3] - new_boxes[:, 1])
         overlap = inter / area
 
-        mask = (overlap > 0)
+        mask = (overlap > 0.05)
 
         if mask.any():
             new_boxes = new_boxes[mask, :]
@@ -495,7 +495,7 @@ class CutMix(object):
         area = (new_boxes[:, 2] - new_boxes[:, 0]) * (new_boxes[:, 3] - new_boxes[:, 1])
         overlap = inter / area
 
-        mask = (overlap < 1.0)
+        mask = (overlap < 0.95)
 
         if mask.any():
             new_boxes = new_boxes[mask, :]
