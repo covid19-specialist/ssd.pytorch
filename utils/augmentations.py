@@ -439,6 +439,9 @@ class CutMix(object):
         return bbx1, bby1, bbx2, bby2
 
     def filter_cropped(self, bboxes, labels, xmin, ymin, xmax, ymax):
+        if len(labels) == 0:
+            return bboxes, labels
+            
         # convert to integer rect x1,y1,x2,y2
         rect = np.array([xmin, ymin, xmax, ymax])
 
@@ -481,6 +484,9 @@ class CutMix(object):
         return new_boxes, new_labels
         
     def filter_uncropped(self, bboxes, labels, xmin, ymin, xmax, ymax):
+        if len(labels) == 0:
+            return bboxes, labels
+            
         new_boxes = bboxes.copy()
         new_boxes *= self.size
         new_labels = labels.copy()
