@@ -79,7 +79,7 @@ class MultiBoxLoss(nn.Module):
 #             conf_t = conf_t.cuda()
               device = 'cuda' if torch.cuda.is_available() else 'cpu'
         elif self.use_gpu == 2:
-            try
+            try:
               device = xm.xla_device()
             except:
                 device = 'cpu'
