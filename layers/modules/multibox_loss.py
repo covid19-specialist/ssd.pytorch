@@ -32,7 +32,7 @@ class MultiBoxLoss(nn.Module):
 
     def __init__(self, num_classes, overlap_thresh, prior_for_matching,
                  bkg_label, neg_mining, neg_pos, neg_overlap, encode_target,
-                 use_gpu=True):
+                 use_gpu=1):
         super(MultiBoxLoss, self).__init__()
         self.use_gpu = use_gpu
         self.num_classes = num_classes
@@ -72,13 +72,21 @@ class MultiBoxLoss(nn.Module):
             defaults = priors.data
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
-        if self.use_gpu:
+        if self.use_gpu == 1:
               # handbook
 #             loc_t = loc_t.cuda()
 #             conf_t = conf_t.cuda()
               device = 'cuda' if torch.cuda.is_available() else 'cpu'
-              loc_t = loc_t.to(device)
-              conf_t = conf_t.to(device)
+        elif self.use_gpu == 2:
+            try
+              device = xm.xla_device()
+            except:
+                device = 'cpu'
+        else:
+            device = 'cpu'
+            
+        loc_t = loc_t.to(device)
+        conf_t = conf_t.to(device)
               # handbook
               
         # wrap targets

@@ -66,9 +66,9 @@ if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
 if torch.cuda.is_available():
-    if args.cuda:
+    if args.cuda == 1:
         torch.set_default_tensor_type('torch.cuda.FloatTensor')
-    if not args.cuda:
+    else:
         print("WARNING: It looks like you have a CUDA device, but aren't using \
               CUDA.  Run with --cuda for optimal eval speed.")
         torch.set_default_tensor_type('torch.FloatTensor')
@@ -396,11 +396,19 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
 
 #         x = Variable(im.unsqueeze(0))
         x = im.unsqueeze(0)
-        if args.cuda:
+        if args.cuda == 1:
             #handbook
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
 #             x = x.cuda()
-            x = x.to(device)
+        elif args.cuda == 2:
+            try:
+                device = xm.xla_device()
+            except:
+                device = 'cpu'
+        else:
+            device = 'cpu'
+            
+        x = x.to(device)
             
         _t['im_detect'].tic()
         detections = net(x).data
@@ -444,12 +452,17 @@ if __name__ == '__main__':
     num_classes = len(labelmap) ## + 1  removed as background is included too for hard negative mining   # +1 for background in the default impl
     ssd_net = build_ssd('test', 300, num_classes)            # initialize SSD
     
-    if args.cuda:
+    if args.cuda == 1:
         #handbook
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 #         net = net.cuda()
-        net = ssd_net.to(device)
         cudnn.benchmark = True
+    elif args.cuda == 2:
+        device = xm.xla_device()
+    else:
+        device = 'cpu'
+    
+    net = ssd_net.to(device)
         
     net.load_weights(args.trained_model)
     net.eval()
