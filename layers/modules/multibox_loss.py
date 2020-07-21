@@ -64,15 +64,6 @@ class MultiBoxLoss(nn.Module):
         num_priors = (priors.size(0))
         num_classes = self.num_classes
 
-        # match priors (default boxes) and ground truth boxes
-        loc_t = torch.Tensor(num, num_priors, 4)
-        conf_t = torch.LongTensor(num, num_priors)
-        for idx in range(num):
-            truths = targets[idx][:, :-1].data
-            labels = targets[idx][:, -1].data
-            defaults = priors.data
-            match(self.threshold, truths, defaults, self.variance, labels,
-                  loc_t, conf_t, idx)
         if self.use_gpu == 1:
               # handbook
 #             loc_t = loc_t.cuda()
@@ -80,14 +71,26 @@ class MultiBoxLoss(nn.Module):
               device = 'cuda' if torch.cuda.is_available() else 'cpu'
         elif self.use_gpu == 2:
             try:
-              device = xm.xla_device()
+                device = xm.xla_device()
             except:
                 device = 'cpu'
         else:
             device = 'cpu'
             
+        # match priors (default boxes) and ground truth boxes
+        loc_t = torch.Tensor(num, num_priors, 4)
+        conf_t = torch.LongTensor(num, num_priors)
+        
         loc_t = loc_t.to(device)
         conf_t = conf_t.to(device)
+        
+        for idx in range(num):
+            truths = targets[idx][:, :-1].data
+            labels = targets[idx][:, -1].data
+            defaults = priors.data
+            match(self.threshold, truths, defaults, self.variance, labels,
+                  loc_t, conf_t, idx)
+            
               # handbook
               
         # wrap targets
