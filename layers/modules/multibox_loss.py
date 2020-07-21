@@ -94,7 +94,9 @@ class MultiBoxLoss(nn.Module):
                   loc_t, conf_t, idx)
             
               # handbook
-              
+             
+        loc_data = loc_data.to(device)
+        conf_data = conf_data.to(device) 
         # wrap targets
         # handbook
 #         loc_t = Variable(loc_t, requires_grad=False)
