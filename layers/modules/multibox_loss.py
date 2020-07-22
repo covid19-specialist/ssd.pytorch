@@ -101,6 +101,9 @@ class MultiBoxLoss(nn.Module):
 #         conf_t = Variable(conf_t, requires_grad=False)
         # handbook
 
+        if self.use_gpu == 2:
+            conf_data = conf_data.to(device)
+            
         pos = conf_t > 0
         num_pos = pos.sum(dim=1, keepdim=True)
 
