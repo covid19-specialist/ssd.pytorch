@@ -148,12 +148,8 @@ class MultiBoxLoss(nn.Module):
 #             neg_idx = neg_idx.to(device)
             
         both_idx = (pos_idx + neg_idx).gt(0)
-        
-        if both_idx.any():
-            conf_p = conf_data[both_idx]
-            conf_p = conf_p.view(-1, self.num_classes)
-        else:
-            conf_p = conf_data[~both_idx].view(-1, self.num_classes)
+        conf_p = conf_data[both_idx]
+        conf_p = conf_p.view(-1, self.num_classes)
 #         conf_p = conf_p[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
         targets_weighted = conf_t[(pos+neg).gt(0)]
         ##user_warning
