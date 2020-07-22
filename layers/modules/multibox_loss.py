@@ -6,6 +6,7 @@ import torch_xla.core.xla_model as xm
 # from torch.autograd import Variable
 from data import wheat as cfg
 from ..box_utils import match, log_sum_exp
+import numpy as np
 
 
 class MultiBoxLoss(nn.Module):
@@ -146,9 +147,13 @@ class MultiBoxLoss(nn.Module):
 #             pos_idx = pos_idx.to(device)
 #             neg_idx = neg_idx.to(device)
             
-        both_idx = ((pos_idx+neg_idx) > 0).nonzero()
-        conf_p = conf_data[both_idx]
-        conf_p = conf_p.view(-1, self.num_classes)
+        both_idx = (pos_idx+neg_idx).gt(0)
+        
+        if both_idx.any():
+            conf_p = conf_data[both_idx]
+            conf_p = conf_p.view(-1, self.num_classes)
+        else:
+            conf_p = conf_data.view(-1, self.num_classes)
 #         conf_p = conf_p[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
         targets_weighted = conf_t[(pos+neg).gt(0)]
         ##user_warning
