@@ -142,7 +142,7 @@ class MultiBoxLoss(nn.Module):
         pos_idx = pos.unsqueeze(2).expand_as(conf_data)
         neg_idx = neg.unsqueeze(2).expand_as(conf_data)
         
-        if use_gpu == 2:
+        if self.use_gpu == 2:
             pos_idx = pos_idx.to(device, dtype=torch.long)
             neg_idx = neg_idx.to(device, dtype=torch.long)
             
