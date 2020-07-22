@@ -82,7 +82,7 @@ class MultiBoxLoss(nn.Module):
         conf_t = torch.LongTensor(num, num_priors)
         
         loc_t = loc_t.to(device)
-        conf_t = conf_t.to(device)
+        conf_t = conf_t.to(device, dtype=torch.long)
         
         for idx in range(num):
             truths = targets[idx][:, :-1].data
@@ -102,6 +102,7 @@ class MultiBoxLoss(nn.Module):
         # handbook
 
         if self.use_gpu == 2:
+            loc_data = loc_data.to(device)
             conf_data = conf_data.to(device)
             
         pos = conf_t > 0
