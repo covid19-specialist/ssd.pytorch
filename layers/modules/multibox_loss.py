@@ -146,7 +146,9 @@ class MultiBoxLoss(nn.Module):
             pos_idx = pos_idx.to(device)
             neg_idx = neg_idx.to(device)
             
-        conf_p = conf_data[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
+        both_idx = ((pos_idx+neg_idx) > 0) ##(pos_idx+neg_idx).gt(0)
+        conf_p = conf_data[both_idx]
+        conf_p = conf_p.view(-1, self.num_classes)
         targets_weighted = conf_t[(pos+neg).gt(0)]
         ##user_warning
         # loss_c = F.cross_entropy(conf_p, targets_weighted, size_average=False, reduction='sum')
