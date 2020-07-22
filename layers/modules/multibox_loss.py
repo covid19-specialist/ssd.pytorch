@@ -142,13 +142,14 @@ class MultiBoxLoss(nn.Module):
         pos_idx = pos.unsqueeze(2).expand_as(conf_data)
         neg_idx = neg.unsqueeze(2).expand_as(conf_data)
         
-        if self.use_gpu == 2:
-            pos_idx = pos_idx.to(device)
-            neg_idx = neg_idx.to(device)
+        # if self.use_gpu == 2:
+#             pos_idx = pos_idx.to(device)
+#             neg_idx = neg_idx.to(device)
             
-        both_idx = ((pos_idx+neg_idx) > 0).nonzero() ##(pos_idx+neg_idx).gt(0)
+        both_idx = ((pos_idx+neg_idx) > 0).nonzero()
         conf_p = conf_data[both_idx]
         conf_p = conf_p.view(-1, self.num_classes)
+#         conf_p = conf_p[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
         targets_weighted = conf_t[(pos+neg).gt(0)]
         ##user_warning
         # loss_c = F.cross_entropy(conf_p, targets_weighted, size_average=False, reduction='sum')
