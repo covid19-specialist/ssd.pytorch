@@ -149,15 +149,15 @@ class MultiBoxLoss(nn.Module):
          
         if self.use_gpu == 2:   
             both_idx = (pos_idx + neg_idx).gt(0).bool().to(device)
-            conf_data = conf_data.to(device)
-            conf_p = torch.matmul(conf_data, both_idx)
+            conf_data = conf_data.data.to(device)
+            conf_p = conf_data * both_idx
             conf_p = conf_p.view(-1, self.num_classes)
         else:
             conf_p = conf_p[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
             
         if self.use_gpu == 2:
             both = (pos + neg).gt(0).bool().to(device)
-            targets_weighted = torch.matmul(conf_t, both)
+            targets_weighted = conf_t * both
         else:
             targets_weighted = conf_t[(pos+neg).gt(0)]
         ##user_warning
