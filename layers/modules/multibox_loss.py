@@ -147,8 +147,8 @@ class MultiBoxLoss(nn.Module):
 #             pos_idx = pos_idx.to(device)
 #             neg_idx = neg_idx.to(device)
             
-        both_idx = (pos_idx+neg_idx).gt(0)
-        
+        both_idx = (pos_idx.float() + neg_idx.float()).gt(0)
+        xm.master_print("both_idx: ", both_idx)
         if both_idx.any():
             conf_p = conf_data[both_idx]
             conf_p = conf_p.view(-1, self.num_classes)
