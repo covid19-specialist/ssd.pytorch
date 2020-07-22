@@ -102,9 +102,9 @@ class MultiBoxLoss(nn.Module):
 #         conf_t = Variable(conf_t, requires_grad=False)
         # handbook
 
-        # if self.use_gpu == 2:
-#             loc_data = loc_data.to(device)
-#             conf_data = conf_data.to(device)
+        if self.use_gpu == 2:
+            loc_data = loc_data.data.to(device)
+            conf_data = conf_data.data.to(device)
             
         pos = conf_t > 0
         num_pos = pos.sum(dim=1, keepdim=True)
@@ -147,13 +147,13 @@ class MultiBoxLoss(nn.Module):
 #             pos_idx = pos_idx.to(device)
 #             neg_idx = neg_idx.to(device)
             
-        both_idx = (pos_idx.float() + neg_idx.float()).gt(0)
-        xm.master_print("both_idx: ", both_idx)
+        both_idx = (pos_idx + neg_idx).gt(0)
+        
         if both_idx.any():
             conf_p = conf_data[both_idx]
             conf_p = conf_p.view(-1, self.num_classes)
         else:
-            conf_p = conf_data.view(-1, self.num_classes)
+            conf_p = conf_data[~both_idx].view(-1, self.num_classes)
 #         conf_p = conf_p[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
         targets_weighted = conf_t[(pos+neg).gt(0)]
         ##user_warning
