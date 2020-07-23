@@ -149,14 +149,14 @@ class MultiBoxLoss(nn.Module):
          
         if self.use_gpu == 2:   
             both_idx = (pos_idx.float() + neg_idx.float()).gt(0)
-            conf_p =  (both_idx.float() * conf_data)
+            conf_p =  both_idx.float() * conf_data
             conf_p = conf_p.view(-1, self.num_classes)
         else:
             conf_p = conf_p[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
             
         if self.use_gpu == 2:
             both = (pos.float() + neg.float()).gt(0)
-            targets_weighted = (both.float() * conf_t)
+            targets_weighted = both.float() * conf_t
         else:
             targets_weighted = conf_t[(pos+neg).gt(0)]
         ##user_warning
