@@ -88,10 +88,9 @@ class MultiBoxLoss(nn.Module):
         for idx in range(num):
             truths = targets[idx][:, :-1].data.to(device)
             labels = targets[idx][:, -1].data.to(device)
-            defaults = priors.data
+            defaults = priors.data.to(device)
             
-            defaults = defaults.to(device)
-            match(self.threshold, truths, defaults, self.variance, labels,
+            match(self.threshold, truths, defaults, self.variance.to(device), labels,
                   loc_t, conf_t, idx)
             
               # handbook
