@@ -82,15 +82,15 @@ class MultiBoxLoss(nn.Module):
         loc_t = torch.Tensor(num, num_priors, 4)
         conf_t = torch.LongTensor(num, num_priors)
         
-        loc_t = loc_t.to(device)
-        conf_t = conf_t.to(device, dtype=torch.long)
+#         loc_t = loc_t.to(device)
+#         conf_t = conf_t.to(device, dtype=torch.long)
         
         for idx in range(num):
             truths = targets[idx][:, :-1].data
             labels = targets[idx][:, -1].data
             defaults = priors.data
             
-            defaults = defaults.to(device)
+#             defaults = defaults.to(device)
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
             
