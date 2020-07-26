@@ -95,7 +95,6 @@ class MultiBoxLoss(nn.Module):
                 #defaults = defaults.clamp_(0, 1)
             
                 print("defaults: ", defaults.shape)
-#                 print(defaults)
             
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
