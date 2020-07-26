@@ -88,9 +88,11 @@ class MultiBoxLoss(nn.Module):
         for idx in range(num):
             truths = targets[idx][:, :-1].data
             labels = targets[idx][:, -1].data
-            defaults = priors.data.float()
+            defaults = torch.Tensor(priors.data)
+            defaults = defaults.to(device)
             
-            print("defaults: ", defaults)
+            print("defaults: ", defaults.shape)
+            print(defaults)
             
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
