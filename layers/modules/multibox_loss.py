@@ -89,6 +89,7 @@ class MultiBoxLoss(nn.Module):
             truths = targets[idx][:, :-1].data
             labels = targets[idx][:, -1].data
             defaults = priors.data
+            defaults = defaults.to(device)
             
             # if self.use_gpu == 2:
 #                 defaults = priors.data.to(device)
