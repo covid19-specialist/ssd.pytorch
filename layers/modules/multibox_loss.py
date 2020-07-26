@@ -88,9 +88,9 @@ class MultiBoxLoss(nn.Module):
         for idx in range(num):
             truths = targets[idx][:, :-1].data
             labels = targets[idx][:, -1].data
+            defaults = priors.data.float()
             
             print("defaults: ", defaults)
-            defaults = priors.data.float()
             
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
