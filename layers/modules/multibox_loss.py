@@ -91,7 +91,7 @@ class MultiBoxLoss(nn.Module):
             defaults = priors.data
             
             if self.use_gpu == 2:
-                defaults = torch.FloatTensor(priors).to(device)
+                defaults = priors.data.to(device)
                 #defaults = defaults.clamp_(0, 1)
             
                 print("defaults: ", defaults.shape)
