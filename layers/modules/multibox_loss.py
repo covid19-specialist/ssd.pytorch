@@ -90,11 +90,11 @@ class MultiBoxLoss(nn.Module):
             labels = targets[idx][:, -1].data
             defaults = priors.data
             
-            if self.use_gpu == 2:
-                defaults = priors.data.to(device)
+            # if self.use_gpu == 2:
+#                 defaults = priors.data.to(device)
                 #defaults = defaults.clamp_(0, 1)
             
-                print("defaults: ", defaults.shape)
+            print("defaults: ", defaults.shape)
             
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
