@@ -8,7 +8,7 @@ from __future__ import print_function
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
-import torch_xla.core.xla_model as xm
+# import torch_xla.core.xla_model as xm
 # from torch.autograd import Variable
 from data import WHEAT_ROOT, WHEATAnnotationTransform, WHEATDetection, BaseTransform 
 from data import label_map as labelmap

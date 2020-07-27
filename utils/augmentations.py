@@ -618,7 +618,7 @@ class CutMix(object):
             return self.generate_mixup_image(batch_img, batch_boxes, batch_labels, 1.0)
         
 class SSDAugmentation(object):
-    def __init__(self, size=300, mean=(104, 117, 123)):
+    def __init__(self, size=300, mean=(80, 81, 55)):
         self.mean = mean
         self.size = size
         self.augment = Compose([
