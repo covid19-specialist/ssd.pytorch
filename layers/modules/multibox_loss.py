@@ -70,11 +70,11 @@ class MultiBoxLoss(nn.Module):
 #             loc_t = loc_t.cuda()
 #             conf_t = conf_t.cuda()
               device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        elif self.use_gpu == 2:
-            try:
-                device = xm.xla_device()
-            except:
-                device = 'cpu'
+        # elif self.use_gpu == 2:
+#             try:
+#                 device = xm.xla_device()
+#             except:
+#                 device = 'cpu'
         else:
             device = 'cpu'
             
@@ -149,18 +149,18 @@ class MultiBoxLoss(nn.Module):
         pos_idx = pos.unsqueeze(2).expand_as(conf_data)
         neg_idx = neg.unsqueeze(2).expand_as(conf_data)
          
-        if self.use_gpu == 2:   
-            both_idx = (pos_idx.float() + neg_idx.float()).gt(0)
-            conf_p =  (both_idx.float() * conf_data).sum(dim=1)
-            conf_p = conf_p.view(-1, self.num_classes)
-        else:
-            conf_p = conf_p[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
+        # if self.use_gpu == 2:   
+#             both_idx = (pos_idx.float() + neg_idx.float()).gt(0)
+#             conf_p =  (both_idx.float() * conf_data).sum(dim=1)
+#             conf_p = conf_p.view(-1, self.num_classes)
+#         else:
+        conf_p = conf_p[(pos_idx+neg_idx).gt(0)].view(-1, self.num_classes)
             
-        if self.use_gpu == 2:
-            both = (pos.float() + neg.float()).gt(0)
-            targets_weighted = (both.float() * conf_t).sum(dim=1)
-        else:
-            targets_weighted = conf_t[(pos+neg).gt(0)]
+        # if self.use_gpu == 2:
+#             both = (pos.float() + neg.float()).gt(0)
+#             targets_weighted = (both.float() * conf_t).sum(dim=1)
+#         else:
+        targets_weighted = conf_t[(pos+neg).gt(0)]
         ##user_warning
         # loss_c = F.cross_entropy(conf_p, targets_weighted, size_average=False, reduction='sum')
         loss_c = F.cross_entropy(conf_p, targets_weighted, reduction='sum')

@@ -401,11 +401,11 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
             #handbook
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
 #             x = x.cuda()
-        elif args.cuda == 2:
-            try:
-                device = xm.xla_device()
-            except:
-                device = 'cpu'
+        # elif args.cuda == 2:
+#             try:
+#                 device = xm.xla_device()
+#             except:
+#                 device = 'cpu'
         else:
             device = 'cpu'
             
@@ -458,8 +458,8 @@ if __name__ == '__main__':
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 #         net = net.cuda()
         cudnn.benchmark = True
-    elif args.cuda == 2:
-        device = xm.xla_device()
+    # elif args.cuda == 2:
+#         device = xm.xla_device()
     else:
         device = 'cpu'
     
