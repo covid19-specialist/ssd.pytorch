@@ -89,13 +89,13 @@ class MultiBoxLoss(nn.Module):
             truths = targets[idx][:, :-1].data
             labels = targets[idx][:, -1].data
             defaults = priors.data
-            defaults = defaults.to(device)
+#             defaults = defaults.to(device)
             
             # if self.use_gpu == 2:
 #                 defaults = priors.data.to(device)
                 #defaults = defaults.clamp_(0, 1)
             
-            print("defaults: ", defaults.shape)
+#             print("defaults: ", defaults.shape)
             
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
@@ -148,10 +148,6 @@ class MultiBoxLoss(nn.Module):
         # Confidence Loss Including Positive and Negative Examples
         pos_idx = pos.unsqueeze(2).expand_as(conf_data)
         neg_idx = neg.unsqueeze(2).expand_as(conf_data)
-        
-        # if self.use_gpu == 2:
-#             pos_idx = pos_idx.to(device)
-#             neg_idx = neg_idx.to(device)
          
         if self.use_gpu == 2:   
             both_idx = (pos_idx.float() + neg_idx.float()).gt(0)

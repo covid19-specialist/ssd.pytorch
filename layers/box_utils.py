@@ -94,10 +94,10 @@ def match(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
     # (Bipartite Matching)
     # [1,num_objects] best prior for each ground truth
     best_prior_overlap, best_prior_idx = overlaps.max(1, keepdim=True)
-    print("best_prior_idx: ", best_prior_idx)
+#     print("best_prior_idx: ", best_prior_idx)
     # [1,num_priors] best ground truth for each prior
     best_truth_overlap, best_truth_idx = overlaps.max(0, keepdim=True)
-    print("best_truth_idx: ", best_truth_idx)
+#     print("best_truth_idx: ", best_truth_idx)
     
     best_truth_idx.squeeze_(0)
     best_truth_overlap.squeeze_(0)
